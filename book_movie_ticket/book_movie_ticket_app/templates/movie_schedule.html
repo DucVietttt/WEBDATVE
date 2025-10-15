@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/schedule.css' %}">
+
+<div class="container mt-5 schedule">
+  <section class="lich-chieu">
+    <h2 style="color: black;">Lịch Chiếu Phim</h2>
+
+    <!-- 🎬 Suất chiếu sắp tới -->
+    <h4 class="mt-4 mb-3 fw-bold text-primary">🎬 Suất chiếu sắp tới</h4>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Thời gian</th>
+          <th>Tên phim</th>
+          <th>Thể loại</th>
+          <th>Phòng chiếu</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in upcoming %}
+          <tr>
+            <td>{{ s.date_time|date:"d/m/Y H:i" }}</td>
+            <td>
+              <a href="{% url 'movie_detail' s.movie.id %}" class="text-decoration-none">
+                {{ s.movie.title }}
+              </a>
+            </td>
+            <td>{{ s.movie.genre }}</td>
+            <td>{{ s.room.name }}</td>
+            <td class="text-end">
+              {% if request.user.is_authenticated %}
+                <a href="#"
+                   class="btn btn-dark btn-sm open-booking"
+                   data-toggle="modal" data-target="#bookingModal"
+                   data-movie-id="{{ s.movie.id }}"
+                   data-movie-title="{{ s.movie.title }}"
+                   data-room-id="{{ s.room.id }}"
+                   data-room-name="{{ s.room.name }}"
+                   data-datetime="{{ s.date_time|date:'Y-m-d H:i:s' }}">
+                   Đặt vé
+                </a>
+              {% else %}
+                <a href="#" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#loginModal">
+                  Đăng nhập để đặt vé
+                </a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="5" class="text-center text-muted">Chưa có suất sắp chiếu</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+    <!-- 📽 Suất đã chiếu -->
+    <h4 class="mt-4 mb-3 fw-bold text-primary">🎬 Suất đã chiếu</h4>
+    <table class="table table-striped">
+      <thead>
+        <tr>
+          <th>Thời gian</th>
+          <th>Tên phim</th>
+          <th>Thể loại</th>
+          <th>Phòng chiếu</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in past %}
+          <tr class="text-muted">
+            <td>{{ s.date_time|date:"d/m/Y H:i" }}</td>
+            <td>{{ s.movie.title }}</td>
+            <td>{{ s.movie.genre }}</td>
+            <td>{{ s.room.name }}</td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="4" class="text-center text-muted">Chưa có suất đã chiếu</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </section>
+</div>
+
+{# ==== Nhúng modal đặt vé dùng chung (đã có sẵn ở trang Phim) ==== #}
+{% include "book_ticket/booking_modal.html" %}
+{% endblock %}
+
+{% block script %}
+<script>
+  // Bấm "Đặt vé" → mở modal, prefill thông tin, tải ghế trống
+  $(document).on('click', '.open-booking', function (e) {
+    e.preventDefault();
+
+    const movieId   = $(this).data('movie-id');
+    const movieName = $(this).data('movie-title');
+    const roomId    = $(this).data('room-id');
+    const roomName  = $(this).data('room-name');
+    const dt        = $(this).data('datetime'); // "YYYY-MM-DD HH:MM:SS"
+
+    const $modal = $('#bookingModal');
+
+    // Điền giá trị ẩn để POST về user_booking
+    $modal.find('input[name="movie_id"]').val(movieId);
+    $modal.find('input[name="room_id"]').val(roomId);
+    $modal.find('input[name="date_time"]').val(dt);
+
+    // Cập nhật text hiển thị trong modal (nếu bạn có các span này)
+    $modal.find('[data-bind="movie_title"]').text(movieName);
+    $modal.find('[data-bind="room_name"]').text(roomName);
+    $modal.find('[data-bind="showtime"]').text(dt);
+
+    // Tải ghế trống cho đúng suất
+    const $seatContainer = $modal.find('#seat-container');
+    $seatContainer.html('<p class="text-muted mb-0">Đang tải ghế...</p>');
+
+    $.getJSON(`/api/seats/?movie_id=${movieId}&room_id=${roomId}&date_time=${encodeURIComponent(dt)}`)
+      .done(function (res) {
+        const nums = res.available_seats || [];
+        if (!nums.length) {
+          $seatContainer.html('<p class="text-danger mb-0">Hết ghế trống cho suất này.</p>');
+          return;
+        }
+        let html = '<div class="d-flex flex-wrap">';
+        nums.forEach(n => {
+          html += `
+            <label class="border rounded p-2 m-1">
+              <input type="checkbox" name="selected_seats[]" value="${n}">
+              Ghế ${n}
+            </label>`;
+        });
+        html += '</div>';
+        $seatContainer.html(html);
+      })
+      .fail(function () {
+        $seatContainer.html('<p class="text-danger mb-0">Không tải được danh sách ghế.</p>');
+      });
+
+    // Mở modal
+    $modal.modal('show');
+  });
+</script>
+{% endblock %}

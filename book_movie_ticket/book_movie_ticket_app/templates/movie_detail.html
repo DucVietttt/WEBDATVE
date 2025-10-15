@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5 text-light">
+  <div class="row">
+    <div class="col-md-4">
+      {% if movie.poster %}
+        <img src="{{ movie.poster.url }}" class="img-fluid rounded" alt="{{ movie.title }}">
+      {% else %}
+        <img src="{% static 'img/placeholder.png' %}" class="img-fluid rounded" alt="No poster">
+      {% endif %}
+    </div>
+    <div class="col-md-8">
+      <h2>{{ movie.title }}</h2>
+      <p><strong>Thể loại:</strong> {{ movie.genre }}</p>
+      <p><strong>Thời lượng:</strong> {{ movie.duration }} phút</p>
+      <p><strong>Đạo diễn:</strong> {{ movie.director }}</p>
+      <p><strong>Ngày công chiếu:</strong> {{ movie.release_date|date:"d/m/Y" }}</p>
+      <p>{{ movie.description }}</p>
+      <hr>
+      <h4>Suất chiếu</h4>
+     <ul class="list-unstyled">
+  {% for s in showtimes %}
+    <li class="mb-2">
+      {{ s.date_time|date:"d/m/Y H:i" }} – {{ s.room.name }}
+
+      <a
+        href="{% if request.user.is_authenticated %}
+                 {% url 'user_booking' %}?movie_id={{ movie.id }}&room_id={{ s.room.id }}&date_time={{ s.date_time|date:'Y-m-d H:i:s' }}
+               {% else %}
+                 {% url 'user_login' %}?next={{ request.path }}
+               {% endif %}"
+        class="btn btn-sm btn-primary ms-2">
+        Đặt vé
+      </a>
+    </li>
+  {% empty %}
+    <li>Chưa có suất chiếu</li>
+  {% endfor %}
+</ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

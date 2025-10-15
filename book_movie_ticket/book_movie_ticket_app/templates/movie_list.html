@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/booking.css' %}">
+
+<div class="container mt-5">
+  <h1 class="text-center text-light mb-4">Phim Hot</h1>
+
+  <div class="row">
+    {% if not movies %}
+      <div class="col-md-12">
+        <h3 class="text-light text-center">Hiện tại không có phim nào</h3>
+      </div>
+    {% endif %}
+
+    {% for movie in movies %}
+      <div class="col-md-4 mb-3">
+        <div class="card bg-secondary text-light h-100">
+          {% if movie.poster %}
+            <img class="card-img-top"
+                 src="{{ movie.poster.url }}"
+                 alt="Poster: {{ movie.title }}"
+                 style="height:500px; width:100%; object-fit:cover;">
+          {% else %}
+            <!-- Ảnh dự phòng -->
+            <img class="card-img-top"
+                 src="{% static 'img/placeholder.png' %}"
+                 alt="No poster"
+                 style="height:500px; width:100%; object-fit:cover;">
+          {% endif %}
+
+          <div class="card-body d-flex flex-column">
+            <h5 class="card-title mb-2">{{ movie.title }}</h5>
+            <p class="card-text text-light-50" style="font-weight: lighter;">
+              {{ movie.description|truncatewords:30 }}
+            </p>
+            <p class="card-text mt-auto">
+              <small class="text-muted">Ngày chiếu: {{ movie.release_date|date:"d/m/Y" }}</small>
+            </p>
+
+            {% if request.user.is_anonymous %}
+              <a class="btn btn-dark book-now-btn"
+                 data-toggle="modal"
+                 data-target="#loginModal"
+                 href="#">Đặt vé</a>
+            {% else %}
+              <a class="btn btn-dark book-now-btn"
+                 data-toggle="modal"
+                 data-target="#bookingModal{{ movie.id }}">Đặt vé</a>
+            {% endif %}
+
+            <a href="{% url 'movie_detail' movie.id %}" class="btn btn-dark ml-2">Chi tiết</a>
+          </div>
+        </div>
+      </div>
+
+      {% include 'book_ticket/booking_modal.html' with movie=movie %}
+    {% endfor %}
+  </div>
+</div>
+
+{# Gộp JS, tránh lặp lại trong vòng for #}
+<script>
+  $(function () {
+    $(".container").on("click", ".book-now-btn", function (e) {
+      var modalId = $(this).data("target");
+      $(modalId).modal("show");
+    });
+
+    // Đóng modal thì reset anchor (nếu cần)
+    $(document).on("hidden.bs.modal", ".modal", function () {
+      window.location.hash = '';
+    });
+  });
+</script>
+{% endblock %}
