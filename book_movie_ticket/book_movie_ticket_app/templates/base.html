@@ -755,14 +755,18 @@
                             </a>
                         </li>
                     </ul>
-                    <form class="form-inline my-2 my-lg-0 search-form">
-                        <div class="search-wrapper">
-                            <input class="form-control" type="search" placeholder="Tìm kiếm phim..." aria-label="Search">
-                            <button class="btn btn-search" type="submit">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </div>
-                    </form>
+                    <form class="form-inline my-2 my-lg-0 search-form"
+      action="{% url 'search_movies' %}" method="get">
+  <div class="search-wrapper">
+    <input class="form-control" type="search" name="q"
+           placeholder="Tìm kiếm phim..."
+           value="{{ request.GET.q|default:'' }}" aria-label="Search">
+    <button class="btn btn-search" type="submit">
+      <i class="fas fa-search"></i>
+    </button>
+  </div>
+</form>
+
                     {% comment %} {{ request.user}} {% endcomment %}
                     {% if request.user.is_anonymous %}
                         <ul class="navbar-nav ml-3 flex-row">

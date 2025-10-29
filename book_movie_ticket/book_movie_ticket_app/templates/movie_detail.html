@@ -2,6 +2,8 @@
 {% load static %}
 
 {% block content %}
+<link rel="stylesheet" href="{% static 'css/booking.css' %}"> {# để modal hiển thị giống trang phim #}
+
 <div class="container mt-5 text-light">
   <div class="row">
     <div class="col-md-4">
@@ -11,6 +13,7 @@
         <img src="{% static 'img/placeholder.png' %}" class="img-fluid rounded" alt="No poster">
       {% endif %}
     </div>
+
     <div class="col-md-8">
       <h2>{{ movie.title }}</h2>
       <p><strong>Thể loại:</strong> {{ movie.genre }}</p>
@@ -18,28 +21,69 @@
       <p><strong>Đạo diễn:</strong> {{ movie.director }}</p>
       <p><strong>Ngày công chiếu:</strong> {{ movie.release_date|date:"d/m/Y" }}</p>
       <p>{{ movie.description }}</p>
+
       <hr>
       <h4>Suất chiếu</h4>
-     <ul class="list-unstyled">
-  {% for s in showtimes %}
-    <li class="mb-2">
-      {{ s.date_time|date:"d/m/Y H:i" }} – {{ s.room.name }}
 
-      <a
-        href="{% if request.user.is_authenticated %}
-                 {% url 'user_booking' %}?movie_id={{ movie.id }}&room_id={{ s.room.id }}&date_time={{ s.date_time|date:'Y-m-d H:i:s' }}
-               {% else %}
-                 {% url 'user_login' %}?next={{ request.path }}
-               {% endif %}"
-        class="btn btn-sm btn-primary ms-2">
-        Đặt vé
-      </a>
-    </li>
-  {% empty %}
-    <li>Chưa có suất chiếu</li>
-  {% endfor %}
-</ul>
+      <ul class="list-unstyled">
+        {% for s in showtimes %}
+          <li class="mb-2">
+            {{ s.date_time|date:"d/m/Y H:i" }} – {{ s.room.name }}
+
+            {% if request.user.is_authenticated %}
+              {# Nút mở modal ĐẶT VÉ của chính phim này #}
+              <button type="button"
+                      class="btn btn-primary btn-sm ms-2 open-booking"
+                      data-toggle="modal"
+                      data-target="#bookingModal{{ movie.id }}"
+                      data-movie-id="{{ movie.id }}"
+                      data-room-id="{{ s.room.id }}"
+                      data-room-name="{{ s.room.name }}"
+                      data-datetime="{{ s.date_time|date:'Y-m-d\\TH:i' }}">
+                Đặt vé
+              </button>
+            {% else %}
+              <a class="btn btn-secondary btn-sm ms-2"
+                 href="{% url 'user_login' %}?next={{ request.path }}">
+                Đăng nhập để đặt vé
+              </a>
+            {% endif %}
+          </li>
+        {% empty %}
+          <li>Chưa có suất chiếu</li>
+        {% endfor %}
+      </ul>
     </div>
   </div>
 </div>
+
+{# Nhúng modal giống hệt trang Phim cho PHIM hiện tại #}
+{% include 'book_ticket/booking_modal.html' with movie=movie %}
+{% endblock %}
+
+{% block script %}
+<script>
+  $(document).on('click', '.open-booking', function (e) {
+    e.preventDefault();
+
+    const movieId  = $(this).data('movie-id');
+    const roomId   = $(this).data('room-id');
+    const dtLocal  = $(this).data('datetime'); // Y-m-dTH:i (input datetime-local)
+
+    const $modal = $('#bookingModal' + movieId);
+
+    const $roomSelect = $modal.find('#roomSelection' + movieId + ' select');
+    if ($roomSelect.length) {
+      $roomSelect.val(String(roomId)).trigger('change'); // kích hoạt loadSeats()
+    }
+
+    // Set DATETIME vào input name='date_time' trong modal
+    const $dtInput = $modal.find('input[name="date_time"]');
+    if ($dtInput.length) {
+      $dtInput.val(dtLocal).trigger('change'); // kích hoạt loadSeats()
+    }
+
+    $modal.modal('show');
+  });
+</script>
 {% endblock %}
