@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h1>Thống kê vé đã đặt</h1>
+
+<h2>Tổng số vé</h2>
+<p><strong>{{ total_tickets }}</strong> vé</p>
+
+<hr>
+
+<h2>Thống kê theo phim</h2>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Phim</th>
+        <th>Số vé đã đặt</th>
+    </tr>
+    {% for row in stats_by_movie %}
+    <tr>
+        <td>{{ row.movie__title }}</td>
+        <td>{{ row.total_tickets }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<hr>
+
+<h2>Thống kê theo ngày</h2>
+<table border="1" cellpadding="5">
+    <tr>
+        <th>Ngày</th>
+        <th>Số vé đã đặt</th>
+    </tr>
+    {% for row in stats_by_date %}
+    <tr>
+        <td>{{ row.date }}</td>
+        <td>{{ row.total_tickets }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endblock %}

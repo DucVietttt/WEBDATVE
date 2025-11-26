@@ -1,0 +1,53 @@
+{% extends "admin/base_site.html" %}
+
+{% block title %}Thống kê vé{% endblock %}
+
+{% block content %}
+<h1>Thống kê vé đã đặt</h1>
+
+<p><strong>Tổng số vé:</strong> {{ total_tickets }}</p>
+
+<h2>Theo phim</h2>
+<table class="admin-stat-table">
+    <thead>
+        <tr>
+            <th>Phim</th>
+            <th>Số vé</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in stats_by_movie %}
+        <tr>
+            <td>{{ row.movie__title }}</td>
+            <td>{{ row.total_tickets }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">Chưa có vé nào.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<h2>Theo ngày chiếu</h2>
+<table class="admin-stat-table">
+    <thead>
+        <tr>
+            <th>Ngày</th>
+            <th>Số vé</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in stats_by_date %}
+        <tr>
+            <td>{{ row.date }}</td>
+            <td>{{ row.total_tickets }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="2">Chưa có vé nào.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
